@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Code Runner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #codeArea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        #console {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .button-container {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>JavaScript Code Runner</h1>
+    
+    <textarea id="codeArea" placeholder="Введите ваш JavaScript код здесь...">// Пример кода
+for (let i = 0; i < 5; i++) {
+    console.log('Сообщение ' + i);
+    
+    // Имитация асинхронного кода
+    if (i === 2) {
+        setTimeout(() => {
+            console.log('Асинхронное сообщение после 2');
+        }, 1000);
+    }
+}</textarea>
+    
+    <div class="button-container">
+        <button id="runButton">Запуск</button>
+        <button id="stopButton" disabled>Стоп</button>
+        <button id="clearButton">Очистить консоль</button>
+    </div>
+    
+    <div id="console"></div>
+
+    <script>
+        const codeArea = document.getElementById('codeArea');
+        const runButton = document.getElementById('runButton');
+        const stopButton = document.getElementById('stopButton');
+        const clearButton = document.getElementById('clearButton');
+        const consoleOutput = document.getElementById('console');
+        
+        let executionId = null;
+        let shouldStop = false;
+        
+        // Переопределяем стандартный console.log
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg) : arg
+            ).join(' ');
+            
+            const timestamp = new Date().toLocaleTimeString();
+            consoleOutput.innerHTML += `[${timestamp}] ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+        
+        runButton.addEventListener('click', () => {
+            shouldStop = false;
+            runButton.disabled = true;
+            stopButton.disabled = false;
+            
+            try {
+                // Создаем функцию из введенного кода
+                const userCode = new Function(codeArea.value);
+                
+                // Запускаем код с возможностью остановки
+                executionId = setTimeout(() => {
+                    if (!shouldStop) {
+                        userCode();
+                    }
+                    executionId = null;
+                    runButton.disabled = false;
+                    stopButton.disabled = true;
+                }, 0);
+                
+            } catch (error) {
+                console.log('Ошибка:', error.message);
+                runButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        });
+        
+        stopButton.addEventListener('click', () => {
+            shouldStop = true;
+            if (executionId) {
+                clearTimeout(executionId);
+                executionId = null;
+            }
+            console.log('Выполнение остановлено');
+            runButton.disabled = false;
+            stopButton.disabled = true;
+        });
+        
+        clearButton.addEventListener('click', () => {
+            consoleOutput.innerHTML = '';
+        });
+    </script>
+</body>
+</html>
