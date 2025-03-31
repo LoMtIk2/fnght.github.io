@@ -6,8 +6,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-        *{box-sizing:border-box}
-
         :root {
             --mc-dark: #1a1a1a;
             --mc-green: #55FF55;
@@ -33,6 +31,8 @@
             background: rgba(0, 0, 0, 0.8);
             padding: 20px;
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            box-sizing: border-box;
+            width: 95%;
         }
 
         h1 {
@@ -44,20 +44,23 @@
 
         .controls {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 30px;
+            width: 100%;
         }
 
         input, button {
             background: #2d2d2d;
             border: var(--mc-border) #555;
             color: var(--mc-green);
-            padding: 12px;
+            padding: 10px 8px;
             font-family: inherit;
-            font-size: 0.8em;
+            font-size: 0.7em;
             transition: all 0.2s;
             text-shadow: 1px 1px 0 #000;
+            box-sizing: border-box;
+            width: 100%;
         }
 
         input:focus {
@@ -71,6 +74,8 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            min-width: 120px;
+            white-space: nowrap;
         }
 
         button:hover {
@@ -126,6 +131,23 @@
 
         .online { background: #55FF55; box-shadow: 0 0 10px #55FF55; }
         .offline { background: #FF5555; }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                width: 100%;
+                border: none;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin: 10px 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -136,7 +158,7 @@
             <input type="text" id="host" placeholder="Сервер IP" value="quinitylite.aternos.me">
             <input type="number" id="port" placeholder="Порт" value="15950">
             <input type="text" id="username" placeholder="Ник бота" value="QuinityBot">
-            <button id="startBtn" style="grid-column: 1/3;">
+            <button id="startBtn">
                 <span class="status-indicator offline"></span>
                 Запустить бота
             </button>
@@ -154,7 +176,6 @@
         const consoleDiv = document.getElementById('console');
         const statusIndicator = document.querySelector('.status-indicator');
         
-        // Обработчики управления
         document.getElementById('startBtn').addEventListener('click', () => {
             const data = {
                 host: document.getElementById('host').value,
@@ -162,17 +183,14 @@
                 username: document.getElementById('username').value
             };
             socket.emit('startBot', data);
-            statusIndicator.classList.remove('offline');
-            statusIndicator.classList.add('online');
+            statusIndicator.classList.replace('offline', 'online');
         });
 
         document.getElementById('stopBtn').addEventListener('click', () => {
             socket.emit('stopBot');
-            statusIndicator.classList.remove('online');
-            statusIndicator.classList.add('offline');
+            statusIndicator.classList.replace('online', 'offline');
         });
 
-        // Обработка логов
         socket.on('log', (msg) => {
             const entry = document.createElement('div');
             entry.className = 'log-entry';
@@ -184,7 +202,6 @@
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         });
 
-        // Эффекты для кнопок
         document.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('mousedown', () => {
                 btn.style.transform = 'translateY(2px)';
