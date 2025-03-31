@@ -1,126 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JS Code Runner</title>
+    <title>Minecraft Bot Controller</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        :root {
+            --mc-dark: #1a1a1a;
+            --mc-green: #55FF55;
+            --mc-gray: #7F7F7F;
+            --mc-border: 4px solid;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36zwjjgzhhYWGMYAEYB8RmROaABADeOQ8CXl/xfgAAAABJRU5ErkJggg=='),
+                        linear-gradient(45deg, #1a1a1a 0%, #2d2d2d 100%);
+            font-family: 'Press Start 2P', cursive;
+            color: var(--mc-green);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
             max-width: 800px;
             margin: 0 auto;
+            border: var(--mc-border) #555;
+            background: rgba(0, 0, 0, 0.8);
             padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
         }
-        #codeArea {
-            width: 100%;
-            height: 200px;
-            margin-bottom: 10px;
-            font-family: monospace;
+
+        h1 {
+            text-align: center;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #555;
+            margin: 20px 0;
         }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        input, button {
+            background: #2d2d2d;
+            border: var(--mc-border) #555;
+            color: var(--mc-green);
+            padding: 12px;
+            font-family: inherit;
+            font-size: 0.8em;
+            transition: all 0.2s;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--mc-green);
+            box-shadow: 0 0 10px var(--mc-green);
+        }
+
         button {
-            padding: 8px 16px;
-            margin-right: 10px;
+            background: linear-gradient(180deg, #555 0%, #333 100%);
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
+
+        button:hover {
+            background: linear-gradient(180deg, #666 0%, #444 100%);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.5);
+        }
+
         #console {
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            height: 200px;
+            background: rgba(0, 0, 0, 0.9);
+            border: var(--mc-border) #555;
+            height: 400px;
+            padding: 15px;
             overflow-y: auto;
-            padding: 10px;
-            font-family: monospace;
-            white-space: pre-wrap;
+            line-height: 1.5;
+            font-size: 0.9em;
         }
-        .button-container {
-            margin-bottom: 10px;
+
+        #console::-webkit-scrollbar {
+            width: 10px;
+            background: #1a1a1a;
         }
+
+        #console::-webkit-scrollbar-thumb {
+            background: #555;
+            border: 2px solid #333;
+        }
+
+        .log-entry {
+            margin: 8px 0;
+            padding: 5px;
+            border-left: 3px solid var(--mc-green);
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            background: #555;
+        }
+
+        .online { background: #55FF55; box-shadow: 0 0 10px #55FF55; }
+        .offline { background: #FF5555; }
     </style>
 </head>
 <body>
-    <h1>JavaScript Code Runner</h1>
-    
-    <textarea id="codeArea" placeholder="Введите ваш JavaScript код здесь...">// Пример кода
-for (let i = 0; i < 5; i++) {
-    console.log('Сообщение ' + i);
-    
-    // Имитация асинхронного кода
-    if (i === 2) {
-        setTimeout(() => {
-            console.log('Асинхронное сообщение после 2');
-        }, 1000);
-    }
-}</textarea>
-    
-    <div class="button-container">
-        <button id="runButton">Запуск</button>
-        <button id="stopButton" disabled>Стоп</button>
-        <button id="clearButton">Очистить консоль</button>
-    </div>
-    
-    <div id="console"></div>
+    <div class="container">
+        <h1>⚡ Minecraft Bot Controller</h1>
+        
+        <div class="controls">
+            <input type="text" id="host" placeholder="Сервер IP" value="quinitylite.aternos.me">
+            <input type="number" id="port" placeholder="Порт" value="15950">
+            <input type="text" id="username" placeholder="Ник бота" value="QuinityBot">
+            <button id="startBtn" style="grid-column: 1/3;">
+                <span class="status-indicator offline"></span>
+                Запустить бота
+            </button>
+            <button id="stopBtn">⏹️ Экстренная остановка</button>
+        </div>
 
+        <div id="console">
+            <div class="log-entry">[Система] Консоль инициализирована</div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const codeArea = document.getElementById('codeArea');
-        const runButton = document.getElementById('runButton');
-        const stopButton = document.getElementById('stopButton');
-        const clearButton = document.getElementById('clearButton');
-        const consoleOutput = document.getElementById('console');
+        const socket = io();
+        const consoleDiv = document.getElementById('console');
+        const statusIndicator = document.querySelector('.status-indicator');
         
-        let executionId = null;
-        let shouldStop = false;
-        
-        // Переопределяем стандартный console.log
-        const originalConsoleLog = console.log;
-        console.log = function(...args) {
-            originalConsoleLog.apply(console, args);
-            const message = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg) : arg
-            ).join(' ');
-            
-            const timestamp = new Date().toLocaleTimeString();
-            consoleOutput.innerHTML += `[${timestamp}] ${message}\n`;
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
-        };
-        
-        runButton.addEventListener('click', () => {
-            shouldStop = false;
-            runButton.disabled = true;
-            stopButton.disabled = false;
-            
-            try {
-                // Создаем функцию из введенного кода
-                const userCode = new Function(codeArea.value);
-                
-                // Запускаем код с возможностью остановки
-                executionId = setTimeout(() => {
-                    if (!shouldStop) {
-                        userCode();
-                    }
-                    executionId = null;
-                    runButton.disabled = false;
-                    stopButton.disabled = true;
-                }, 0);
-                
-            } catch (error) {
-                console.log('Ошибка:', error.message);
-                runButton.disabled = false;
-                stopButton.disabled = true;
-            }
+        // Обработчики управления
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const data = {
+                host: document.getElementById('host').value,
+                port: parseInt(document.getElementById('port').value),
+                username: document.getElementById('username').value
+            };
+            socket.emit('startBot', data);
+            statusIndicator.classList.remove('offline');
+            statusIndicator.classList.add('online');
         });
-        
-        stopButton.addEventListener('click', () => {
-            shouldStop = true;
-            if (executionId) {
-                clearTimeout(executionId);
-                executionId = null;
-            }
-            console.log('Выполнение остановлено');
-            runButton.disabled = false;
-            stopButton.disabled = true;
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            socket.emit('stopBot');
+            statusIndicator.classList.remove('online');
+            statusIndicator.classList.add('offline');
         });
-        
-        clearButton.addEventListener('click', () => {
-            consoleOutput.innerHTML = '';
+
+        // Обработка логов
+        socket.on('log', (msg) => {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span style="color: #FFD700;">[${new Date().toLocaleTimeString()}]</span> 
+                ${msg}
+            `;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        });
+
+        // Эффекты для кнопок
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'translateY(2px)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'translateY(0)';
+            });
         });
     </script>
 </body>
